@@ -1,6 +1,7 @@
 #include <iostream>
 #include <conio.h>
 #include <limits>
+#include <fstream>
 
 using namespace std;
 
@@ -15,18 +16,68 @@ class Menu {
 };
 
 // deklarasi variabel global
-Menu menu[20];
-int order[20][3];
+const int maxIndex = 20;
+Menu menu[maxIndex];
+int order[maxIndex][3];
 int totalHarga;
 int totalHargaHandler;
 int totalBayar;
 int totalKembalian;
-int handler[20];
+int handler[maxIndex];
 int handlerHolder;
 int handlerSelector;
 
 // fungsi membuat Menu
 void createMenu(int limit, string namaMenu, int hargaMenu, int diskonHarga);
+
+class DBase {
+
+    public: 
+        ifstream in;
+        ofstream out;
+        string filename;
+
+        DBase(const string filename) {
+            DBase::filename = filename;
+        }
+
+        void save(string &index, string &namaMenu, string &hargaMenu, string &diskon) {
+            DBase::out.open(this->filename,ios::app);
+            DBase::out << index << endl;
+            DBase::out << namaMenu << endl;
+            DBase::out << hargaMenu << endl;
+            DBase::out << diskon << endl;
+            DBase::out.close();
+        }
+
+        void getData() {
+            DBase::in.open(DBase::filename,ios::in);
+            string index, namaMenu, hargaMenu, diskonHarga;
+            int limit, harga, diskon;
+
+            while (!DBase::in.eof()) {
+                getline(in,index);
+                getline(in,namaMenu);
+                getline(in,hargaMenu);
+                getline(in,diskonHarga);
+
+                if (index != "") {
+                    limit = stoi(index);
+                    harga = stoi(hargaMenu);
+                    diskon = stoi(diskonHarga);
+
+                    menu[limit].namaMenu = namaMenu;
+                    menu[limit].hargaMenu = harga;
+                    menu[limit].diskonHarga = diskon;
+                }
+            }
+
+            this->in.close();
+        }
+};
+
+// deklarasi object database
+DBase database = DBase("menu.txt");
 
 // fungsi bayar
 void payOrder(int &totalHarga);
@@ -43,22 +94,19 @@ int displayMenu(int &list);
 // fungsi reset pesanan
 void resetOrder() ;
 
+// fungsi menampilkan menu admin
+int displayAdmin();
+
+// fungsi menampilkan daftar menu
+void displayMenuList();
+
+// fungsi masuk admin daashboard
+void dashboardAdmin();
+
 int main() {
     int list = 0;
     char is_continue;
-
-    createMenu(0, "Nasi Goreng", 12000, 20);
-    createMenu(1, "Mie Goreng", 12000, 20);
-    createMenu(2, "Nasi Gila", 13000, 0);
-    createMenu(3, "Mie Godok", 15000, 20);
-    createMenu(4, "Mie Gledek", 15000, 0);
-    createMenu(5, "Ayam Gledek", 15000, 30);
-    createMenu(6, "Ayam Geprek", 15000, 0);
-    createMenu(7, "Mie Geprek", 15000, 0);
-    createMenu(8, "Mie Jago", 15000, 0);
-    createMenu(9, "Kwetiaw  ", 15000, 0);
-    createMenu(10, "Rawon  ", 15000, 0);
-    createMenu(11, "Karaage  ", 15000, 0);
+    database.getData();
     
     order:
     int pilihan = displayMenu(list);
@@ -133,6 +181,14 @@ int main() {
                 goto out;
                 break;
 
+            case 777:
+                dashboardAdmin();
+                break;
+            
+            case 888:
+                database.getData();
+                break;
+
             default:
                 break;
         }
@@ -181,7 +237,7 @@ void decreaseNavigator(int &limit, int &input) {
 // fungsi menampilkan pesanan
 void displayOrder(int &input) {
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < maxIndex; i++) {
         int limit = order[i][0];
         int jumlah = order[i][1];
         order[i][2] = ((jumlah * menu[i].hargaMenu) - (jumlah * menu[i].hargaMenu * menu[i].diskonHarga/100)); 
@@ -209,11 +265,13 @@ int displayMenu(int &list) {
 
     cout << "Daftar Menu" << endl;
     for (int i = 0; i <= 5; i++) {
-        cout << "[" << i+1 << "] " << menu[i+list].namaMenu;
-        cout << "\t\tRp " << menu[i+list].hargaMenu;
-        if (menu[i+list].diskonHarga != 0) 
-            cout << "  -" << menu[i+list].diskonHarga << "%";
-        cout << endl;
+        if (menu[i].hargaMenu != 0) {
+            cout << "[" << i+1 << "] " << menu[i+list].namaMenu;
+            cout << "\t\tRp " << menu[i+list].hargaMenu;
+            if (menu[i+list].diskonHarga != 0) 
+                cout << "  -" << menu[i+list].diskonHarga << "%";
+            cout << endl;
+        }
     }
     cout << "[9] Buat Pesanan\n" << endl;
     cout << "[7] << Prev [8] Next >>" << endl;
@@ -229,9 +287,87 @@ int displayMenu(int &list) {
 
 // fungsi reset pesanan
 void resetOrder() {
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < maxIndex; i++) {
         order[i][0] = 0;
         order[i][1] = 0;
         order[i][2] = 0;
+    }
+}
+
+// fungsi admin
+int displayAdmin() {
+    int input;
+    system("cls");
+
+    cout << "DASHBOARD ADMIN" << endl;
+    cout << "[1] Buat menu baru" << endl;
+    cout << "[2] Tampilkan menu" << endl;
+    cout << "[3] Kembali ke daftar menu" << endl;
+    cout << "==============================" << endl;
+    cout << "pilih [1-3]: ";
+    cin >> input;
+    cin.ignore(numeric_limits<streamsize>::max(),'\n');
+
+	return input;
+}
+
+void saveNewMenu() {
+    string index, namaMenu, hargaMenu, diskonHarga;
+
+    cout << "Masukkan data" << endl;
+    cout << "Index menu\t: ";
+    cin >> index;
+    cin.ignore(numeric_limits<streamsize>::max(),'\n');
+
+    cout << "Nama menu\t: ";
+    getline(cin, namaMenu);
+
+    cout << "Harga menu\t: ";
+    cin >> hargaMenu;
+
+    cout << "Diskon harga\t: ";
+    cin >> diskonHarga;
+
+    database.save(index, namaMenu, hargaMenu, diskonHarga);
+    database.getData();
+
+    getch();
+}
+
+void displayMenuList() {
+    cout << "Daftar Menu" << endl;
+    for (int i = 0; i <= maxIndex; i++) {
+        if (menu[i].hargaMenu != 0) {
+            cout << "[" << i << "] " << menu[i].namaMenu;
+            cout << "\t\tRp " << menu[i].hargaMenu;
+            cout << "  -" << menu[i].diskonHarga << "%";
+            cout << endl;
+        }
+    }
+    getch();
+}
+
+// fungsi admin daashboard
+void dashboardAdmin() {
+    int pilihan = displayAdmin();
+
+    while (pilihan != 3) {
+        switch (pilihan) {
+        case 1:
+            saveNewMenu();
+            break;
+        
+        case 2:
+            displayMenuList();
+            break;
+        
+        case 3:
+            break;
+        
+        default:
+            break;
+        }
+
+        pilihan = displayAdmin();
     }
 }

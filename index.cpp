@@ -47,12 +47,12 @@ int main() {
     int list = 0;
     char is_continue;
 
-    createMenu(0, "Nasi Goreng", 12000, 0);
-    createMenu(1, "Mie Goreng", 12000, 0);
+    createMenu(0, "Nasi Goreng", 12000, 20);
+    createMenu(1, "Mie Goreng", 12000, 20);
     createMenu(2, "Nasi Gila", 13000, 0);
-    createMenu(3, "Mie Godok", 15000, 0);
+    createMenu(3, "Mie Godok", 15000, 20);
     createMenu(4, "Mie Gledek", 15000, 0);
-    createMenu(5, "Ayam Gledek", 15000, 0);
+    createMenu(5, "Ayam Gledek", 15000, 30);
     createMenu(6, "Ayam Geprek", 15000, 0);
     createMenu(7, "Mie Geprek", 15000, 0);
     createMenu(8, "Mie Jago", 15000, 0);
@@ -184,7 +184,7 @@ void displayOrder(int &input) {
     for (int i = 0; i < 20; i++) {
         int limit = order[i][0];
         int jumlah = order[i][1];
-        order[i][2] = ((jumlah * menu[i].hargaMenu) - (menu[i].hargaMenu * menu[i].diskonHarga)); 
+        order[i][2] = ((jumlah * menu[i].hargaMenu) - (jumlah * menu[i].hargaMenu * menu[i].diskonHarga/100)); 
         if (jumlah != 0) {
             cout << menu[i].namaMenu << "\t" << jumlah << "\tRp " << order[i][2] << "  "; 
             decreaseNavigator(limit, input);
@@ -193,7 +193,7 @@ void displayOrder(int &input) {
         totalHarga += order[i][2];
     }
     if (totalHarga != 0) {
-        cout << "================================" << endl;
+        cout << "=======================================" << endl;
         cout << "Total Harga\t: Rp " << totalHarga << endl;
     }
     
@@ -210,15 +210,15 @@ int displayMenu(int &list) {
     cout << "Daftar Menu" << endl;
     for (int i = 0; i <= 5; i++) {
         cout << "[" << i+1 << "] " << menu[i+list].namaMenu;
-        cout << "\t" << menu[i+list].hargaMenu;
+        cout << "\t\tRp " << menu[i+list].hargaMenu;
         if (menu[i+list].diskonHarga != 0) 
-            cout << "\t" << menu[i+list].diskonHarga;
+            cout << "  -" << menu[i+list].diskonHarga << "%";
         cout << endl;
     }
     cout << "[9] Buat Pesanan\n" << endl;
     cout << "[7] << Prev [8] Next >>" << endl;
     cout << "[11]up [12]down [0]<->" << endl;
-    cout << "================================" << endl;
+    cout << "=======================================" << endl;
     displayOrder(input);
 
     cout << "pilih [1-9]: ";

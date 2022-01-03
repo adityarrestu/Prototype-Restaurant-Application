@@ -2,6 +2,8 @@
 #include <conio.h>
 #include <limits>
 #include <fstream>
+#include <time.h>
+#define Size 50
 
 using namespace std;
 
@@ -30,6 +32,10 @@ int handlerSelector;
 // fungsi membuat Menu
 void createMenu(int limit, string namaMenu, int hargaMenu, int diskonHarga);
 
+// fungsi waktu
+string currentTime();
+
+// membuat kelas database
 class DBase {
 
     public: 
@@ -47,6 +53,29 @@ class DBase {
             DBase::out << namaMenu << endl;
             DBase::out << hargaMenu << endl;
             DBase::out << diskon << endl;
+            DBase::out.close();
+        }
+
+        void saveOrder(int &totalBayar, int &totalKembalian) {
+            DBase::out.open(this->filename,ios::app);
+
+            DBase::out << currentTime() << endl;
+            DBase::out << "=======================================" << endl;
+            for (int i = 0; i < maxIndex; i++) {
+                int limit = order[i][0];
+                int jumlah = order[i][1];
+                order[i][2] = ((jumlah * menu[i].hargaMenu) - (jumlah * menu[i].hargaMenu * menu[i].diskonHarga/100)); 
+                
+                if (jumlah != 0) {
+                    DBase::out << menu[i].namaMenu << "\t" << jumlah << "\t" << menu[i].hargaMenu << "   " << order[i][2] << endl;
+                }
+            }
+            DBase::out << "=======================================" << endl;
+            DBase::out << "Total Harga\t: " << totalHarga << endl;
+            DBase::out << "Tunai\t\t: " << totalBayar << endl;
+            DBase::out << "Kembalian\t: " << totalKembalian << endl;
+            DBase::out << "\n";
+
             DBase::out.close();
         }
 
@@ -74,10 +103,27 @@ class DBase {
 
             this->in.close();
         }
+
+        void getOrder() {
+            DBase::in.open(DBase::filename,ios::in);
+            string data, output;
+
+            while (!DBase::in.eof()) {
+                getline(in, data);
+                output.append("\n" + data);
+            }
+
+            cout << output;
+            
+            getch();
+            DBase::in.close();
+        }
+
 };
 
 // deklarasi object database
 DBase database = DBase("menu.txt");
+DBase databaseOrder = DBase("order.txt");
 
 // fungsi bayar
 void payOrder(int &totalHarga);
@@ -156,7 +202,7 @@ int main() {
 
             case 9:
                 // konfirmasi pesanan
-                cout << "\nKonfirmasi Pesanan[y/n]?: " << endl;
+                cout << "\nKonfirmasi Pesanan[y/n]?: ";
                 cin >> is_continue;
                 if ( (is_continue == 'y') | (is_continue == 'Y')){
                     goto bayar;
@@ -191,6 +237,7 @@ int main() {
 
             default:
                 break;
+
         }
         cancelled:
         pilihan = displayMenu(list);
@@ -217,11 +264,13 @@ void createMenu(int limit, string namaMenu, int hargaMenu, int diskonHarga) {
 
 // fungsi bayar
 void payOrder(int &totalHarga) {
-    cout << "Total Bayar\t: Rp ";
+    cout << "Tunai\t\t: Rp ";
     cin >> totalBayar;
 
     totalKembalian = (totalBayar - totalHarga);
-    cout << "Total Kembalian\t: Rp " << totalKembalian << endl;
+    cout << "Kembalian\t: Rp " << totalKembalian << endl;
+
+    databaseOrder.saveOrder(totalBayar, totalKembalian);
 }
 
 // fungsi navigasi pengurangan pesanan
@@ -302,9 +351,10 @@ int displayAdmin() {
     cout << "DASHBOARD ADMIN" << endl;
     cout << "[1] Buat menu baru" << endl;
     cout << "[2] Tampilkan menu" << endl;
-    cout << "[3] Kembali ke daftar menu" << endl;
+    cout << "[3] Tampilkan histori pesanan" << endl;
+    cout << "[4] Kembali ke daftar menu" << endl;
     cout << "==============================" << endl;
-    cout << "pilih [1-3]: ";
+    cout << "pilih [1-4]: ";
     cin >> input;
     cin.ignore(numeric_limits<streamsize>::max(),'\n');
 
@@ -351,7 +401,7 @@ void displayMenuList() {
 void dashboardAdmin() {
     int pilihan = displayAdmin();
 
-    while (pilihan != 3) {
+    while (pilihan != 4) {
         switch (pilihan) {
         case 1:
             saveNewMenu();
@@ -362,6 +412,10 @@ void dashboardAdmin() {
             break;
         
         case 3:
+            databaseOrder.getOrder();
+            break;
+        
+        case 4:
             break;
         
         default:
@@ -370,4 +424,19 @@ void dashboardAdmin() {
 
         pilihan = displayAdmin();
     }
+}
+
+// fungsi waktu
+string currentTime() {
+    time_t t ;
+    struct tm *tmp ;
+    char MY_TIME[Size];
+    time( &t );
+
+    tmp = localtime( &t );
+     
+    // using strftime to display time
+    strftime(MY_TIME, sizeof(MY_TIME), "%a %x - %H:%M", tmp);
+
+    return MY_TIME;
 }
